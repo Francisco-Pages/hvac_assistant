@@ -6,6 +6,7 @@ import base64
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import tiktoken
 
 # Load environment
 load_dotenv()
@@ -34,28 +35,38 @@ def encode_image_to_base64(image):
     image.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
 
+# --- Utility function to truncate long context text ---
+def truncate_text(text, max_tokens=30000):
+    enc = tiktoken.encoding_for_model("gpt-4")  # works for gpt-4o and gpt-4-turbo too
+    tokens = enc.encode(text)
+    if len(tokens) > max_tokens:
+        tokens = tokens[:max_tokens]
+    return enc.decode(tokens)
+
 def ask_gpt4o_with_image(image, context, question):
     image_b64 = encode_image_to_base64(image)
+    truncated_context = truncate_text(context)
     messages = [
         {"role": "system", "content": "You are a document assistant that explains images and text."},
         {"role": "user", "content": [
-            {"type": "text", "text": f"Context: {context}\n\nQuestion: {question}"},
+            {"type": "text", "text": f"Context: {truncated_context}\n\nQuestion: {question}"},
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
         ]}
     ]
     response = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=messages
     )
     return response.choices[0].message.content
 
 def ask_gpt4o_text_only(context, question):
+    truncated_context = truncate_text(context)
     messages = [
         {"role": "system", "content": "Answer based only on the following document text."},
-        {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
+        {"role": "user", "content": f"Context: {truncated_context}\n\nQuestion: {question}"}
     ]
     response = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=messages
     )
     return response.choices[0].message.content
