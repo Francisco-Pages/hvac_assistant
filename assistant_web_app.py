@@ -41,7 +41,7 @@ def ask_gpt4o(context, question, images=None):
         image_file = openai.files.create(file=io.BytesIO(images[0]), purpose="vision")
         files.append(image_file.id)
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=messages,
             tool_choice="auto",
             max_tokens=1000,
