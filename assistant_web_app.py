@@ -30,30 +30,41 @@ def extract_text_and_images(file):
 
 # Ask GPT-4o with optional image
 def ask_gpt4o(context, question, images=None):
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant who answers based on the document's content and diagrams."},
-        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
-    ]
+    messages = []
 
-    files = []
     if images:
-        # Attach the first image (you can improve this logic)
-        image_file = openai.files.create(file=io.BytesIO(images[0]), purpose="vision")
-        files.append(image_file.id)
+        image_bytes = images[0]
+        messages.append({"role": "system", "content": "You are a helpful assistant who answers questions based on the document and its diagrams."})
+        messages.append({
+            "role": "user",
+            "content": [
+                {"type": "text", "text": f"Context: {context}\n\nQuestion: {question}"},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "attachment://image.png"}
+                }
+            ]
+        })
+
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            tool_choice="auto",
             max_tokens=1000,
             temperature=0.2,
-            images=[{"image": image_file.id, "detail": "high"}]
+            attachments={"image.png": image_bytes},
         )
+
     else:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant who answers questions based on the document text."},
+            {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
+        ]
+
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=messages,
             max_tokens=1000,
-            temperature=0.2
+            temperature=0.2,
         )
 
     return response.choices[0].message.content
