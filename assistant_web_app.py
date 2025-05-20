@@ -1,10 +1,11 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import fitz
+from PIL import Image
+import io
+import base64
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from PIL import Image
-import io
 
 # Load environment
 load_dotenv()
@@ -16,89 +17,74 @@ def extract_text_and_images(file):
     text = ""
     images = []
 
-    for i, page in enumerate(doc):
-        text += f"\n--- Page {i + 1} ---\n"
+    for page_num, page in enumerate(doc):
+        text += f"\n--- Page {page_num+1} ---\n"
         text += page.get_text()
 
         for img_index, img in enumerate(page.get_images(full=True)):
             xref = img[0]
             base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
-            images.append(image_bytes)
+            image = Image.open(io.BytesIO(base_image["image"]))
+            images.append((f"Page {page_num+1} Image {img_index+1}", image))
 
     return text, images
 
-# Ask GPT-4o with optional image
-def ask_gpt4o(context, question, images=None):
-    messages = []
+def encode_image_to_base64(image):
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
 
-    if images:
-        image_bytes = images[0]
-        messages.append({"role": "system", "content": "You are a helpful assistant who answers questions based on the document and its diagrams."})
-        messages.append({
-            "role": "user",
-            "content": [
-                {"type": "text", "text": f"Context: {context}\n\nQuestion: {question}"},
-                {
-                    "type": "image_url",
-                    "image_url": {"url": "attachment://image.png"}
-                }
-            ]
-        })
+def ask_gpt4o_with_image(image, context, question):
+    image_b64 = encode_image_to_base64(image)
+    messages = [
+        {"role": "system", "content": "You are a document assistant that explains images and text."},
+        {"role": "user", "content": [
+            {"type": "text", "text": f"Context: {context}\n\nQuestion: {question}"},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
+        ]}
+    ]
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=messages
+    )
+    return response.choices[0].message.content
 
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            max_tokens=1000,
-            temperature=0.2,
-            attachments={"image.png": image_bytes},
-        )
-
-    else:
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant who answers questions based on the document text."},
-            {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
-        ]
-
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            max_tokens=1000,
-            temperature=0.2,
-        )
-
+def ask_gpt4o_text_only(context, question):
+    messages = [
+        {"role": "system", "content": "Answer based only on the following document text."},
+        {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
+    ]
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=messages
+    )
     return response.choices[0].message.content
 
 # --- Streamlit App ---
 
-st.set_page_config(page_title="Chill Bot: Chat Assistant", layout="centered")
-st.title("📄🧠 ChillBot: Chat Assistant")
-
-if "context" not in st.session_state:
-    st.session_state.context = ""
-if "images" not in st.session_state:
-    st.session_state.images = []
-if "chat" not in st.session_state:
-    st.session_state.chat = []
+st.set_page_config(page_title="PDF Chatbot with Vision", layout="wide")
+st.title("🧠 PDF + Image Chatbot")
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
-
 if uploaded_file:
     with st.spinner("Extracting content..."):
         text, images = extract_text_and_images(uploaded_file)
-        st.session_state.context = text
-        st.session_state.images = images
 
-    st.success("PDF processed! Ask away.")
-
+    st.success("PDF processed!")
     question = st.text_input("Ask a question about the document:")
 
     if question:
-        with st.spinner("Generating answer..."):
-            answer = ask_gpt4o(st.session_state.context, question, st.session_state.images)
-            st.session_state.chat.append(("You", question))
-            st.session_state.chat.append(("Assistant", answer))
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            response = ask_gpt4o_text_only(text, question)
+            st.markdown("#### 💬 Answer:")
+            st.write(response)
 
-    st.markdown("### 💬 Conversation")
-    for speaker, msg in st.session_state.chat:
-        st.markdown(f"**{speaker}:** {msg}")
+        with col2:
+            st.markdown("#### 🖼️ Available Images:")
+            for idx, (label, img) in enumerate(images):
+                if st.button(f"Explain {label}", key=f"btn_{idx}"):
+                    answer = ask_gpt4o_with_image(img, text, question)
+                    st.image(img, caption=label, use_column_width=True)
+                    st.write("🔍 GPT-4o says:")
+                    st.write(answer)
