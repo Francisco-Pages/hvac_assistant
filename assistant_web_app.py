@@ -6,7 +6,6 @@ import base64
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import time
 
 # Load environment
 load_dotenv()
@@ -35,17 +34,6 @@ def encode_image_to_base64(image):
     image.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
 
-def safe_request(*args, **kwargs):
-    retries = 3
-    for i in range(retries):
-        try:
-            return openai.chat.completions.create(*args, **kwargs)
-        except openai.RateLimitError:
-            wait = 2 ** i
-            print(f"Rate limited. Retrying in {wait} seconds...")
-            time.sleep(wait)
-    raise Exception("Rate limit hit repeatedly. Try again later.")
-
 def ask_gpt4o_with_image(image, context, question):
     image_b64 = encode_image_to_base64(image)
     messages = [
@@ -55,11 +43,9 @@ def ask_gpt4o_with_image(image, context, question):
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
         ]}
     ]
-    response = safe_request(
+    response = openai.chat.completions.create(
         model="gpt-4o",
-        messages=messages,
-        max_tokens=1000,
-        temperature=0.2
+        messages=messages
     )
     return response.choices[0].message.content
 
@@ -68,11 +54,9 @@ def ask_gpt4o_text_only(context, question):
         {"role": "system", "content": "Answer based only on the following document text."},
         {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
     ]
-    response = safe_request(
+    response = openai.chat.completions.create(
         model="gpt-4o",
-        messages=messages,
-        max_tokens=1000,
-        temperature=0.2
+        messages=messages
     )
     return response.choices[0].message.content
 
