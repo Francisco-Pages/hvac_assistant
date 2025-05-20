@@ -91,11 +91,11 @@ if uploaded_file:
             st.markdown("#### 💬 Answer:")
             st.write(response)
 
-        with col2:
-            st.markdown("#### 🖼️ Available Images:")
-            for idx, (label, img) in enumerate(images):
-                if st.button(f"Explain {label}", key=f"btn_{idx}"):
-                    answer = ask_gpt4o_with_image(img, text, question)
-                    st.image(img, caption=label, use_column_width=True)
-                    st.write("🔍 GPT-4o says:")
-                    st.write(answer)
+        # with col2:
+        #     st.markdown("#### 🖼️ Available Images:")
+        #     for idx, (label, img) in enumerate(images):
+        #         if st.button(f"Explain {label}", key=f"btn_{idx}"):
+        #             answer = ask_gpt4o_with_image(img, text, question)
+        #             st.image(img, caption=label, use_column_width=True)
+        #             st.write("🔍 GPT-4o says:")
+        #             st.write(answer)
