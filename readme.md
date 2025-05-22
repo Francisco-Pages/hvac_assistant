@@ -28,10 +28,10 @@ A Streamlit-powered web application that allows users to upload PDFs and ask que
 ## Installation
 
 1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Francisco-Pages/hvac_assistant.git
-   cd hvac_assistant
-   ```
+```bash
+git clone https://github.com/Francisco-Pages/hvac_assistant.git
+cd hvac_assistant
+```
 2.	**Create a virtual environment and install dependencies:**
 ```bash
 python -m venv venv
