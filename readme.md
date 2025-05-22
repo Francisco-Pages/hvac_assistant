@@ -32,14 +32,14 @@ A Streamlit-powered web application that allows users to upload PDFs and ask que
    git clone https://github.com/Francisco-Pages/hvac_assistant.git
    cd hvac_assistant
    ```
-	2.	Create a virtual environment and install dependencies:
+2.	**Create a virtual environment and install dependencies:**
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install -r requirements.txt
 ```
 
-	3.	Set up your OpenAI API key:
+3.	**Set up your OpenAI API key:**
 Create a .env file in the root directory:
 ```bash
 OPENAI_API_KEY=your_openai_key_here
@@ -49,13 +49,13 @@ OPENAI_API_KEY=your_openai_key_here
 ⸻
 
 Usage
-	1.	Run the Streamlit app:
+1.	Run the Streamlit app:
 ```bash
 streamlit run assistant_web_app.py
 ```
 
-	2.	Upload a PDF document.
-	3.	Ask a question about the text or select an image to get visual explanation.
+2.	Upload a PDF document.
+3.	Ask a question about the text or select an image to get visual explanation.
 
 ⸻
 
