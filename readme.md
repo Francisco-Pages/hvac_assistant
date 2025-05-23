@@ -60,15 +60,15 @@ streamlit run assistant_web_app.py
 ⸻
 
 Example Use Cases
-•	Ask “What does the schematic on page 4 represent?”
-•	Get summaries of installation instructions from technical manuals
-•	Understand visual content like wiring diagrams or airflow charts
+- Ask “What does the schematic on page 4 represent?”
+- Get summaries of installation instructions from technical manuals
+- Understand visual content like wiring diagrams or airflow charts
 
 ⸻
 
 Limits
-•	Be mindful of token limits. Long documents are automatically truncated to fit the model’s capacity.
-•	The current model (gpt-4o-mini) supports vision and is optimized for performance, but responses may vary with image complexity.
+- Be mindful of token limits. Long documents are automatically truncated to fit the model’s capacity.
+- The current model (gpt-4o-mini) supports vision and is optimized for performance, but responses may vary with image complexity.
 
 ⸻
 
