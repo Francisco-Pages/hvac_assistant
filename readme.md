@@ -1,4 +1,4 @@
-# HVAC Assistant
+# PDF Assistant
 
 A Streamlit-powered web application that allows users to upload PDFs and ask questions about their content—including diagrams and technical images. It leverages OpenAI’s GPT-4o to analyze both text and images from documents.
 
